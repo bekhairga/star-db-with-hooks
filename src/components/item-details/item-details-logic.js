@@ -1,74 +1,45 @@
 /** @format */
 
-import React, { Component } from "react";
+import React, { useReducer,useEffect } from "react";
 import Spinner from "../spinner";
 import "./item-details.css";
 import ItemDetailsView from "./item-details-view";
 import PropType from "prop-types";
 import ErrorIndicator from "../error-indicator";
-const ItemDetailsLogic = View => {
-    return class ItemDetails extends Component {
-        state = {
-            loading: false,
-            item: { id: undefined },
-            error: false,
-            image: null
-        };
-        componentDidMount() {
-            if (this.props.itemId !== undefined) {
-                this.updateItem(
-                    this.props.itemId,
-                    this.props.getData,
-                    this.props.getImage
-                );
+import reducer from './item-details-reducer'
+import  {
+  detailsError,
+  detailsRequest,
+  detailsSuccess
+} from './item-details-actions';
+import inititalState from './item-details-store';
+
+const ItemDetailsLogic = (props) => {
+        const [state, dispatch] = useReducer(reducer,inititalState);
+        const {getData, itemId, getImage} = props;
+
+        const updateItem = (itemId, getData, getImage) => {
+            if(itemId !== undefined){
+                dispatch(detailsRequest());
+                getData(itemId).then(res => {
+               const image = getImage(itemId);
+               dispatch(detailsSuccess(image, res));
+                }).catch(error => {
+               
+                dispatch(detailsError());
+                })
             }
+            
         }
 
-        componentDidUpdate(prevProps, prevState) {
-            if (
-                this.props.itemId !== prevProps.itemId ||
-                prevState.item.id !== this.state.item.id
-            ) {
-                this.updateItem(
-                    this.props.itemId,
-                    this.props.getData,
-                    this.props.getImage
-                );
-            }
-        }
-        updateItem = (itemId, getData, getImage) => {
-            if (null) {
-                return;
-            }
-            this.setState(state => ({
-                ...state,
-                loading: true
-            }));
-            getData(itemId)
-                .then(res =>
-                    this.setState(state => ({
-                        loading: false,
-                        item: res,
-                        error: false,
-                        image: getImage(itemId)
-                    }))
-                )
-                .catch(error =>
-                    this.setState(state => ({
-                        loading: false,
-                        item: null,
-                        image: null,
-                        error: true
-                    }))
-                );
-        };
-        componentDidCatch() {
-            this.setState({ error: true });
-        }
-        render() {
-            const { loading, item, image, error } = this.state;
-            if (this.props.itemId === undefined) {
-                return <h3>Please choose a {this.props.type}</h3>;
+        useEffect(() => { 
+        updateItem(itemId, getData, getImage);
+        }, [itemId, getData, getImage]);
+
+        const {loading, image, data, error} = state;
+       
+            if (itemId === undefined) {
+                return <h3>Please choose a {props.type}</h3>;
             }
             if (loading) {
                 return (
@@ -78,27 +49,31 @@ const ItemDetailsLogic = View => {
                 );
             }
             if (error) {
+        
                 return <ErrorIndicator />;
             }
             return (
-                <View
-                    allChildren={this.props.children}
+                <ItemDetailsView
+                    allChildren={props.children}
                     image={image}
-                    item={item}
+                    item={data}
                 />
             );
-        }
-    };
-};
+}
+
+
 ItemDetailsLogic.defaultProps = {
-    itemId: 1,
+    itemId: undefined,
     getData: () => {},
     getImage: () => {}
 };
 ItemDetailsLogic.propTypes = {
-    itemId: PropType.number,
+    itemId: PropType.oneOfType([
+        PropType.string,
+        PropType.number
+    ]),
     getData: PropType.func,
     getImage: PropType.func
 };
 
-export default ItemDetailsLogic(ItemDetailsView);
+export default ItemDetailsLogic;

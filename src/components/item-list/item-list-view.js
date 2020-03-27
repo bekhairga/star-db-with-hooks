@@ -4,7 +4,7 @@ import React from "react";
 import "./item-list.css";
 import PropType from "prop-types";
 
-const ItemListView = ({ data, onItemSelected, page, changePage, url }) => {
+const ItemListView = ({ data, onItemSelected}) => {
     const items = data.results.map(item => (
         <li
             onClick={() => onItemSelected(item.id)}

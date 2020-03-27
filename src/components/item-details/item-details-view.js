@@ -1,5 +1,11 @@
 import React from "react";
 import PropType from "prop-types";
+
+
+
+
+
+
 const ItemDetailsView = ({ item, image, allChildren }) => {
     return (
         <div className="item-details card">
